@@ -61,19 +61,30 @@ function errorMessage(body: unknown, status: number): string {
 }
 
 export class StudyMindClient {
-  private apiKey: string
-  private apiUrl: string
+  private apiKey:       string
+  private apiUrl:       string
+  private sessionToken: string | null = null
 
+  /** `apiKey` may be empty when a session token is set via setSessionToken(). */
   constructor(apiKey: string, apiUrl?: string) {
     this.apiKey = apiKey
     this.apiUrl = (apiUrl || DEFAULT_API_URL).replace(/\/+$/, '')
+  }
+
+  /** Use a short-lived `st_` session token instead of the API key for all requests. */
+  setSessionToken(token: string | null) {
+    this.sessionToken = token || null
+  }
+
+  private get bearer(): string {
+    return this.sessionToken ?? this.apiKey
   }
 
   private async request<T>(method: string, path: string, body?: unknown): Promise<T> {
     const res = await fetch(`${this.apiUrl}${path}`, {
       method,
       headers: {
-        'Authorization': `Bearer ${this.apiKey}`,
+        'Authorization': `Bearer ${this.bearer}`,
         'Content-Type':  'application/json',
       },
       body: body ? JSON.stringify(body) : undefined,

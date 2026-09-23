@@ -24,16 +24,21 @@ export interface CourseData {
 export type UserRole = 'student' | 'tutor' | 'admin'
 
 export interface StudyMindPanelProps {
-  courseId:   string
-  userId:     string
-  userRole?:  UserRole
-  courseData: CourseData
-  config?:    StudyMindConfig
-  theme?:     'light' | 'dark' | 'auto'
-  className?: string
+  courseId:      string
+  userId:        string
+  userRole?:     UserRole
+  courseData:    CourseData
+  /** Short-lived `st_` token from POST /api/v1/auth/session, minted on YOUR server. Preferred. */
+  sessionToken?: string
+  /** API key config — local development only; never ship an API key to the browser. */
+  config?:       StudyMindConfig
+  /** API base URL when using sessionToken (defaults to https://api.aismartlearner.com). */
+  apiUrl?:       string
+  theme?:        'light' | 'dark' | 'auto'
+  className?:    string
   // Callbacks
-  onReady?:   () => void
-  onError?:   (error: Error) => void
+  onReady?:      () => void
+  onError?:      (error: Error) => void
 }
 
 export type TabId = 'tutor' | 'quiz' | 'flashcards' | 'summary'

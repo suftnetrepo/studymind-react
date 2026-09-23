@@ -16,6 +16,7 @@ const TABS: { id: TabId; label: string; emoji: string }[] = [
 
 declare const process: { env: Record<string, string | undefined> }
 
+// Env vars: NEXT_PUBLIC_STUDYMIND_API_URL (all modes) and NEXT_PUBLIC_STUDYMIND_API_KEY (dev only).
 // Each read is a literal `process.env.X` so Next.js can inline it at build time;
 // the try/catch covers bundlers where `process` is not defined (e.g. Vite).
 function envConfig(): StudyMindConfig {
@@ -104,12 +105,14 @@ function PanelInner() {
 
 export function StudyMindPanel({
   courseId, userId, userRole = 'student',
-  courseData, config, theme = 'light', className, onReady, onError,
+  courseData, sessionToken, config, apiUrl, theme = 'light', className, onReady, onError,
 }: StudyMindPanelProps) {
+  // Env vars are a dev fallback only, used when neither sessionToken nor config is given
   const resolvedConfig = useMemo(
-    () => config ?? envConfig(),
-    [config?.apiKey, config?.apiUrl],  // eslint-disable-line react-hooks/exhaustive-deps
+    () => config ?? (sessionToken ? undefined : envConfig()),
+    [config?.apiKey, config?.apiUrl, sessionToken],  // eslint-disable-line react-hooks/exhaustive-deps
   )
+  const resolvedApiUrl = apiUrl ?? resolvedConfig?.apiUrl ?? envConfig().apiUrl
   const mode = useResolvedTheme(theme)
 
   return (
@@ -119,7 +122,9 @@ export function StudyMindPanel({
         userId={userId}
         userRole={userRole}
         courseData={courseData}
+        sessionToken={sessionToken}
         config={resolvedConfig}
+        apiUrl={resolvedApiUrl}
         onReady={onReady}
         onError={onError}
       >

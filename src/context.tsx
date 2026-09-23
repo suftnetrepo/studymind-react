@@ -25,11 +25,15 @@ export function useStudyMind() {
 }
 
 interface ProviderProps {
-  courseId:   string
-  userId:     string
-  userRole:   UserRole
-  courseData: CourseData
-  config:     StudyMindConfig
+  courseId:      string
+  userId:        string
+  userRole:      UserRole
+  courseData:    CourseData
+  /** Preferred: `st_` token minted server-side via POST /api/v1/auth/session. */
+  sessionToken?: string
+  /** Dev fallback: API key used directly from the browser. */
+  config?:       StudyMindConfig
+  apiUrl?:       string
   onReady?:   () => void
   onError?:   (error: Error) => void
   children:   React.ReactNode
@@ -37,16 +41,30 @@ interface ProviderProps {
 
 export function StudyMindProvider({
   courseId, userId, userRole, courseData,
-  config, onReady, onError, children,
+  sessionToken, config, apiUrl, onReady, onError, children,
 }: ProviderProps) {
   const [isReady,   setIsReady]   = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [error,     setError]     = useState<string | null>(null)
 
-  const client = useMemo(
-    () => new StudyMindClient(config.apiKey, config.apiUrl),
-    [config.apiKey, config.apiUrl],
-  )
+  const apiKey     = config?.apiKey ?? ''
+  const baseUrl    = apiUrl ?? config?.apiUrl
+  const credential = sessionToken || apiKey
+
+  const client = useMemo(() => {
+    const c = new StudyMindClient(sessionToken ? '' : apiKey, baseUrl)
+    if (sessionToken) c.setSessionToken(sessionToken)
+    return c
+  }, [sessionToken, apiKey, baseUrl])
+
+  useEffect(() => {
+    if (!sessionToken && apiKey) {
+      console.warn(
+        '[@studymind/react] Using an API key in the browser exposes it to every visitor. ' +
+        'Mint a short-lived sessionToken on your server via POST /api/v1/auth/session instead.',
+      )
+    }
+  }, [sessionToken, apiKey])
 
   // Latest props via refs so inline callbacks / courseData objects don't re-trigger indexing
   const latest = useRef({ userRole, courseData, onReady, onError })
@@ -86,14 +104,15 @@ export function StudyMindProvider({
       setIsLoading(true)
       setError(null)
 
-      if (!config.apiKey) {
-        return fail(new Error('Missing StudyMind API key'))
+      if (!credential) {
+        return fail(new Error('Missing StudyMind sessionToken (or API key for development)'))
       }
 
       try {
         const status = await client.getCourseStatus(courseId, userId)
         if (status.status === 'ready') return ready()
 
+        // A session token may ingest its own course only (enforced server-side)
         if (status.status !== 'indexing') {
           const { userRole, courseData } = latest.current
           await client.ingestCourse(courseId, userId, userRole, courseData)
@@ -109,7 +128,7 @@ export function StudyMindProvider({
       cancelled = true
       if (timer) clearTimeout(timer)
     }
-  }, [client, courseId, userId, config.apiKey])
+  }, [client, courseId, userId, credential])
 
   const value = useMemo(() => ({
     client, courseId, userId, userRole, courseData, isReady, isLoading, error,

@@ -12,10 +12,12 @@ export function TutorTab() {
   const [input,     setInput]     = useState('')
   const [sending,   setSending]   = useState(false)
   const [sessionId, setSessionId] = useState<string | undefined>()
-  const bottomRef = useRef<HTMLDivElement>(null)
+  const scrollRef = useRef<HTMLDivElement>(null)
 
+  // Scroll only the message list — scrollIntoView would also scroll the host page
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    const el = scrollRef.current
+    if (el) el.scrollTop = el.scrollHeight
   }, [messages, sending])
 
   async function send() {
@@ -46,7 +48,7 @@ export function TutorTab() {
 
   return (
     <>
-      <div style={s.scrollArea} aria-live="polite">
+      <div ref={scrollRef} style={s.scrollArea} aria-live="polite">
         {messages.length === 0 && (
           <div style={{ textAlign: 'center', padding: '32px 16px' }}>
             <div style={{ fontSize: '32px', marginBottom: '8px' }}>💬</div>
@@ -68,7 +70,6 @@ export function TutorTab() {
         {sending && (
           <div style={{ ...s.aiMsg, color: tokens.colors.textMuted }}>Thinking…</div>
         )}
-        <div ref={bottomRef} />
       </div>
       <div style={s.inputRow}>
         <textarea
