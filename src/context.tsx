@@ -24,6 +24,10 @@ interface StudyMindContextValue {
   setSending:    React.Dispatch<React.SetStateAction<boolean>>
   complexity:    Complexity
   setComplexity: React.Dispatch<React.SetStateAction<Complexity>>
+  // Section/lecture scope for Quiz, Flashcards and Summary ('' = all content) — shared so
+  // picking it once applies to all three
+  topic:         string
+  setTopic:      React.Dispatch<React.SetStateAction<string>>
 }
 
 const StudyMindContext = createContext<StudyMindContextValue | null>(null)
@@ -61,12 +65,14 @@ export function StudyMindProvider({
   const [sessionId,  setSessionId]  = useState<string | undefined>()
   const [sending,    setSending]    = useState(false)
   const [complexity, setComplexity] = useState<Complexity>('normal')
+  const [topic,      setTopic]      = useState('')
 
   // A different course or user starts a fresh conversation
   useEffect(() => {
     setMessages([])
     setSessionId(undefined)
     setSending(false)
+    setTopic('')
   }, [courseId, userId])
 
   const apiKey     = config?.apiKey ?? ''
@@ -176,8 +182,9 @@ export function StudyMindProvider({
   const value = useMemo(() => ({
     client, courseId, userId, userRole, courseData, isReady, isLoading, error,
     messages, setMessages, sessionId, setSessionId, sending, setSending, complexity, setComplexity,
+    topic, setTopic,
   }), [client, courseId, userId, userRole, courseData, isReady, isLoading, error,
-      messages, sessionId, sending, complexity])
+      messages, sessionId, sending, complexity, topic])
 
   return (
     <StudyMindContext.Provider value={value}>

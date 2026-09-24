@@ -3,11 +3,13 @@ import { useStudyMind } from '../context'
 import { s, tokens } from '../styles'
 import { EmptyState } from './EmptyState'
 import { IconClipboardList } from '../icons'
+import { TopicSelector, ScopeNote } from '../components/TopicSelector'
 import type { QuizQuestion } from '../types'
 
 export function QuizTab() {
-  const { client, courseId, userId } = useStudyMind()
+  const { client, courseId, userId, topic, setTopic, courseData } = useStudyMind()
   const [questions, setQuestions] = useState<QuizQuestion[]>([])
+  const [quizTopic, setQuizTopic] = useState('')  // topic this quiz was generated for
   const [loading,   setLoading]   = useState(false)
   const [answers,   setAnswers]   = useState<Record<string, string>>({})
   const [submitted, setSubmitted] = useState(false)
@@ -17,8 +19,9 @@ export function QuizTab() {
     setLoading(true)
     setError(null)
     try {
-      const res = await client.generateQuiz(courseId, userId, 5)
+      const res = await client.generateQuiz(courseId, userId, 5, topic || undefined)
       setQuestions(res.questions)
+      setQuizTopic(topic)
       setAnswers({})
       setSubmitted(false)
     } catch (e: unknown) {
@@ -28,14 +31,22 @@ export function QuizTab() {
     }
   }
 
+  const selector = (
+    <TopicSelector sections={courseData.sections ?? []} value={topic} onChange={setTopic}
+      label="Scope to" disabled={loading} />
+  )
+
   if (questions.length === 0) {
     return (
+      <>
+      {selector}
       <div style={s.scrollArea}>
         <EmptyState
           icon={<IconClipboardList size={32} color={tokens.colors.textMuted} />} text="Test your knowledge with an AI-generated quiz"
           error={error} buttonLabel="Generate Quiz" loading={loading} onClick={generate}
         />
       </div>
+      </>
     )
   }
 
@@ -43,7 +54,10 @@ export function QuizTab() {
   const allAnswered = questions.every(q => answers[q.id] !== undefined)
 
   return (
+    <>
+    {selector}
     <div style={s.scrollArea}>
+      {quizTopic && <ScopeNote topic={quizTopic} />}
       {submitted && (
         <div style={{ ...s.card, background: tokens.colors.primaryBg,
           borderColor: tokens.colors.primary, marginBottom: '16px' }}>
@@ -114,5 +128,6 @@ export function QuizTab() {
         </button>
       )}
     </div>
+    </>
   )
 }

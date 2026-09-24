@@ -3,10 +3,12 @@ import { useStudyMind } from '../context'
 import { s, tokens } from '../styles'
 import { EmptyState } from './EmptyState'
 import { IconLayers } from '../icons'
+import { TopicSelector, ScopeNote } from '../components/TopicSelector'
 import type { Flashcard } from '../types'
 
 export function FlashcardsTab() {
-  const { client, courseId, userId } = useStudyMind()
+  const { client, courseId, userId, topic, setTopic, courseData } = useStudyMind()
+  const [cardsTopic, setCardsTopic] = useState('')  // topic this set was generated for
   const [cards,   setCards]   = useState<Flashcard[]>([])
   const [loading, setLoading] = useState(false)
   const [index,   setIndex]   = useState(0)
@@ -17,8 +19,9 @@ export function FlashcardsTab() {
     setLoading(true)
     setError(null)
     try {
-      const res = await client.generateFlashcards(courseId, userId, 20)
+      const res = await client.generateFlashcards(courseId, userId, 20, topic || undefined)
       setCards(res.cards)
+      setCardsTopic(topic)
       setIndex(0)
       setFlipped(false)
     } catch (e: unknown) {
@@ -28,15 +31,23 @@ export function FlashcardsTab() {
     }
   }
 
+  const selector = (
+    <TopicSelector sections={courseData.sections ?? []} value={topic} onChange={setTopic}
+      label="Scope to" disabled={loading} />
+  )
+
   const card = cards[index]
   if (!card) {
     return (
+      <>
+      {selector}
       <div style={s.scrollArea}>
         <EmptyState
           icon={<IconLayers size={32} color={tokens.colors.textMuted} />} text="Generate flashcards to memorise key concepts"
           error={error} buttonLabel="Generate Flashcards" loading={loading} onClick={generate}
         />
       </div>
+      </>
     )
   }
 
@@ -46,7 +57,10 @@ export function FlashcardsTab() {
   }
 
   return (
+    <>
+    {selector}
     <div style={s.scrollArea}>
+      {cardsTopic && <ScopeNote topic={cardsTopic} />}
       <p style={{ textAlign: 'center', fontSize: '12px',
         color: tokens.colors.textMuted, marginBottom: '16px' }}>
         {index + 1} / {cards.length}
@@ -96,5 +110,6 @@ export function FlashcardsTab() {
         {loading ? 'Generating…' : 'Generate New Set'}
       </button>
     </div>
+    </>
   )
 }
