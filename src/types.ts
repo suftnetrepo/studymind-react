@@ -49,6 +49,8 @@ export interface Message {
   content:   string
   sources?:  string[]
   timestamp: Date
+  /** Assistant message that reports a failed request */
+  isError?:  boolean
 }
 
 export interface QuizQuestion {

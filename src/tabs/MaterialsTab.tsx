@@ -2,6 +2,9 @@ import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useStudyMind } from '../context'
 import { s, tokens } from '../styles'
 import type { CourseDocument, DocumentStatus } from '../api'
+import {
+  IconUpload, IconTrash, IconRefreshCw, IconAlertCircle, IconFileText, IconX, Spinner, StatusDot,
+} from '../icons'
 
 const ACCEPT        = '.pdf,.docx,.txt,.md'
 const ALLOWED_EXT   = ['pdf', 'docx', 'txt', 'md']
@@ -24,24 +27,21 @@ function validate(file: File): string | null {
 }
 
 const STATUS: Record<DocumentStatus, { color: string; label: string }> = {
-  ready:    { color: tokens.colors.success, label: '✅ Indexed' },
-  indexing: { color: tokens.colors.warning, label: '⏳ Indexing…' },
-  pending:  { color: tokens.colors.warning, label: '⏳ Queued…' },
-  failed:   { color: tokens.colors.error,   label: '❌ Failed' },
+  ready:    { color: tokens.colors.success, label: 'Indexed'  },
+  indexing: { color: tokens.colors.warning, label: 'Indexing' },
+  pending:  { color: tokens.colors.warning, label: 'Queued'   },
+  failed:   { color: tokens.colors.error,   label: 'Failed'   },
 }
 
 function StatusBadge({ status }: { status: DocumentStatus }) {
   const cfg = STATUS[status] ?? STATUS.pending
-  return (
-    <span style={{ fontSize: '10px', fontWeight: 700, color: cfg.color, whiteSpace: 'nowrap' }}>
-      {cfg.label}
-    </span>
-  )
+  return <StatusDot color={cfg.color} label={cfg.label} />
 }
 
 const smallBtn: React.CSSProperties = {
   padding: '6px', fontSize: '11px', fontWeight: 600, fontFamily: tokens.font.sans,
   borderRadius: tokens.radius.sm, cursor: 'pointer',
+  display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '5px',
 }
 
 export function MaterialsTab() {
@@ -155,7 +155,9 @@ export function MaterialsTab() {
           marginBottom: '16px',
         }}
       >
-        <div style={{ fontSize: '28px', marginBottom: '8px' }}>{uploading ? '⏳' : '📄'}</div>
+        {uploading
+          ? <Spinner size={28} color={tokens.colors.primary} />
+          : <IconUpload size={28} color={tokens.colors.textMuted} style={{ display: 'block', margin: '0 auto 8px' }} />}
         <p style={{ margin: 0, fontSize: '13px', fontWeight: 600, color: tokens.colors.textPrimary }}>
           {uploading
             ? `Uploading ${uploading.name}… ${uploading.pct}%`
@@ -187,12 +189,17 @@ export function MaterialsTab() {
           borderRadius: tokens.radius.md, padding: '10px 12px', marginBottom: '12px',
           fontSize: '12px', color: tokens.colors.error, display: 'flex', gap: '8px' }}>
           <div style={{ flex: 1 }}>
-            {errors.map((err, i) => <div key={i}>⚠️ {err}</div>)}
+            {errors.map((err, i) => (
+              <div key={i} style={{ display: 'flex', gap: '6px', alignItems: 'flex-start' }}>
+                <IconAlertCircle size={14} color={tokens.colors.error} style={{ marginTop: '1px' }} />
+                <span>{err}</span>
+              </div>
+            ))}
           </div>
           <button onClick={() => setErrors([])} aria-label="Dismiss"
             style={{ background: 'none', border: 'none', cursor: 'pointer', color: tokens.colors.error,
-              fontSize: '12px', alignSelf: 'flex-start' }}>
-            ✕
+              fontSize: '12px', alignSelf: 'flex-start', padding: 0, display: 'flex' }}>
+            <IconX size={14} color={tokens.colors.error} />
           </button>
         </div>
       )}
@@ -220,9 +227,11 @@ export function MaterialsTab() {
               <div key={doc.id} style={{ ...s.card, display: 'flex', flexDirection: 'column', gap: '8px',
                 opacity: busy ? 0.6 : 1 }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
-                  <span style={{ fontSize: '20px', flexShrink: 0 }} aria-hidden>
-                    {doc.format === 'pdf' ? '📕' : doc.format === 'docx' ? '📘' : '📄'}
-                  </span>
+                  <IconFileText
+                    size={20}
+                    color={doc.format === 'pdf' ? tokens.colors.error : doc.format === 'docx' ? tokens.colors.primary : tokens.colors.textSecondary}
+                    style={{ marginTop: '1px' }}
+                  />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <a href={doc.url} target="_blank" rel="noopener noreferrer" title={doc.filename}
                       style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: tokens.colors.textPrimary,
@@ -248,7 +257,7 @@ export function MaterialsTab() {
                     style={{ ...smallBtn, flex: 1, border: `1px solid ${tokens.colors.border}`,
                       background: tokens.colors.white, color: tokens.colors.textSecondary }}
                   >
-                    {busy ? 'Working…' : '↻ Replace'}
+                    {busy ? 'Working…' : <><IconRefreshCw size={14} color={tokens.colors.textSecondary} /> Replace</>}
                   </button>
                   <button
                     onClick={() => handleDelete(doc)}
@@ -257,7 +266,7 @@ export function MaterialsTab() {
                     style={{ ...smallBtn, padding: '6px 10px', border: `1px solid ${tokens.colors.error}`,
                       background: tokens.colors.errorBg, color: tokens.colors.error }}
                   >
-                    🗑
+                    <IconTrash size={15} color={tokens.colors.error} />
                   </button>
                 </div>
               </div>

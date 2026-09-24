@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useStudyMind } from '../context'
 import { s, tokens } from '../styles'
 import { EmptyState } from './EmptyState'
+import { IconClipboardList } from '../icons'
 import type { QuizQuestion } from '../types'
 
 export function QuizTab() {
@@ -31,7 +32,7 @@ export function QuizTab() {
     return (
       <div style={s.scrollArea}>
         <EmptyState
-          emoji="📝" text="Test your knowledge with an AI-generated quiz"
+          icon={<IconClipboardList size={32} color={tokens.colors.textMuted} />} text="Test your knowledge with an AI-generated quiz"
           error={error} buttonLabel="Generate Quiz" loading={loading} onClick={generate}
         />
       </div>

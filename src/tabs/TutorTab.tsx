@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react'
 import { useStudyMind } from '../context'
 import { s, tokens } from '../styles'
 import { MarkdownRenderer } from '../MarkdownRenderer'
+import { IconMessageCircle, IconSend, IconAlertCircle, IconFileText } from '../icons'
 import type { Message } from '../types'
 
 let nextId = 0
@@ -39,7 +40,8 @@ export function TutorTab() {
     } catch (e: unknown) {
       setMessages(prev => [...prev, {
         id: newId(), role: 'assistant',
-        content: '⚠️ ' + (e instanceof Error ? e.message : 'Failed to get response'),
+        content: e instanceof Error ? e.message : 'Failed to get response',
+        isError: true,
         timestamp: new Date(),
       }])
     } finally {
@@ -52,7 +54,9 @@ export function TutorTab() {
       <div ref={scrollRef} style={s.scrollArea} aria-live="polite">
         {messages.length === 0 && (
           <div style={{ textAlign: 'center', padding: '32px 16px' }}>
-            <div style={{ fontSize: '32px', marginBottom: '8px' }}>💬</div>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '8px' }}>
+              <IconMessageCircle size={32} color={tokens.colors.textMuted} />
+            </div>
             <p style={{ color: tokens.colors.textSecondary, fontSize: '14px', margin: 0 }}>
               Ask anything about this course
             </p>
@@ -60,17 +64,25 @@ export function TutorTab() {
         )}
         {messages.map(m => (
           <div key={m.id} style={m.role === 'user' ? { ...s.userMsg, whiteSpace: 'pre-wrap' } : s.aiMsg}>
-            {m.role === 'user' ? m.content : <MarkdownRenderer content={m.content} />}
+            {m.role === 'user' ? m.content : m.isError ? (
+              <div role="alert" style={{ display: 'flex', gap: '8px', alignItems: 'flex-start',
+                color: tokens.colors.error, fontSize: '13px' }}>
+                <IconAlertCircle size={16} color={tokens.colors.error} style={{ marginTop: '2px' }} />
+                <span>{m.content}</span>
+              </div>
+            ) : <MarkdownRenderer content={m.content} />}
             {m.role === 'assistant' && m.sources && m.sources.length > 0 && (
               <div style={{ marginTop: '6px', display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
                 {m.sources.map((src, j) => (
                   <span key={j} style={{
+                    display: 'inline-flex', alignItems: 'center', gap: '4px',
                     fontSize: '10px', color: tokens.colors.primary,
                     background: tokens.colors.primaryBg,
                     padding: '2px 7px', borderRadius: '10px',
                     fontWeight: 600,
                   }}>
-                    📄 {src}
+                    <IconFileText size={11} color={tokens.colors.primary} />
+                    {src}
                   </span>
                 ))}
               </div>
@@ -97,7 +109,7 @@ export function TutorTab() {
           disabled={sending || !input.trim()}
           aria-label="Send"
         >
-          ↑
+          <IconSend size={16} />
         </button>
       </div>
     </>

@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useStudyMind } from '../context'
 import { s, tokens } from '../styles'
 import { EmptyState } from './EmptyState'
+import { IconLayers } from '../icons'
 import type { Flashcard } from '../types'
 
 export function FlashcardsTab() {
@@ -32,7 +33,7 @@ export function FlashcardsTab() {
     return (
       <div style={s.scrollArea}>
         <EmptyState
-          emoji="🃏" text="Generate flashcards to memorise key concepts"
+          icon={<IconLayers size={32} color={tokens.colors.textMuted} />} text="Generate flashcards to memorise key concepts"
           error={error} buttonLabel="Generate Flashcards" loading={loading} onClick={generate}
         />
       </div>

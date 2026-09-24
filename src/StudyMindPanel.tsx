@@ -6,15 +6,24 @@ import { FlashcardsTab } from './tabs/FlashcardsTab'
 import { SummaryTab }    from './tabs/SummaryTab'
 import { MaterialsTab }  from './tabs/MaterialsTab'
 import { s, tokens, themeVars } from './styles'
+import {
+  IconMessageCircle, IconClipboardList, IconLayers, IconFileText, IconFolder,
+  IconBook, IconAlertCircle, Spinner, StatusDot, type IconProps,
+} from './icons'
 import type { StudyMindConfig, StudyMindPanelProps, TabId } from './types'
 
-const TABS: { id: TabId; label: string; emoji: string }[] = [
-  { id: 'tutor',      label: 'AI Tutor',   emoji: '💬' },
-  { id: 'quiz',       label: 'Quiz',       emoji: '📝' },
-  { id: 'flashcards', label: 'Flashcards', emoji: '🃏' },
-  { id: 'summary',    label: 'Summary',    emoji: '📋' },
+type Tab = { id: TabId; label: string; Icon: (props: IconProps) => React.ReactElement }
+
+const TABS: Tab[] = [
+  { id: 'tutor',      label: 'AI Tutor',   Icon: IconMessageCircle },
+  { id: 'quiz',       label: 'Quiz',       Icon: IconClipboardList },
+  { id: 'flashcards', label: 'Flashcards', Icon: IconLayers        },
+  { id: 'summary',    label: 'Summary',    Icon: IconFileText      },
 ]
-const MATERIALS_TAB = { id: 'materials' as TabId, label: 'Materials', emoji: '📁' }
+const MATERIALS_TAB: Tab = { id: 'materials', label: 'Materials', Icon: IconFolder }
+
+// Header is navy in both themes, so the status colours are fixed
+const STATUS_COLOR = { loading: '#F59E0B', ready: '#10B981', error: '#EF4444' }
 
 // UI gating only — the API also rejects uploads from student session tokens
 const canManageMaterials = (role: string) => role === 'tutor' || role === 'admin'
@@ -58,10 +67,14 @@ function PanelInner() {
   return (
     <>
       <div style={s.header}>
-        <span style={{ fontSize: '18px' }} aria-hidden>📚</span>
+        <IconBook size={20} color="#A3BFFF" />
         <h2 style={s.headerTitle}>StudyMind AI</h2>
-        <span style={s.headerBadge}>
-          {isLoading ? 'Indexing…' : isReady ? 'Ready' : 'Error'}
+        <span style={{ marginLeft: 'auto' }} role="status">
+          <StatusDot
+            color={isLoading ? STATUS_COLOR.loading : isReady ? STATUS_COLOR.ready : STATUS_COLOR.error}
+            label={isLoading ? 'Indexing' : isReady ? 'Ready' : 'Error'}
+            background="rgba(255,255,255,0.1)"
+          />
         </span>
       </div>
 
@@ -74,7 +87,10 @@ function PanelInner() {
             style={s.tab(activeTab === tab.id)}
             onClick={() => setActiveTab(tab.id)}
           >
-            <span style={{ fontSize: '16px' }} aria-hidden>{tab.emoji}</span>
+            <tab.Icon
+              size={17}
+              color={activeTab === tab.id ? tokens.colors.primary : tokens.colors.textMuted}
+            />
             <span>{tab.label}</span>
           </button>
         ))}
@@ -83,7 +99,7 @@ function PanelInner() {
       <div style={s.content} role="tabpanel">
         {isLoading ? (
           <div style={{ ...s.scrollArea, textAlign: 'center', paddingTop: '48px' }}>
-            <div style={{ fontSize: '32px', marginBottom: '12px' }}>⚡</div>
+            <Spinner size={32} color={tokens.colors.primary} />
             <p style={{ color: tokens.colors.textSecondary, fontSize: '14px' }}>
               Indexing course content…
             </p>
@@ -93,7 +109,7 @@ function PanelInner() {
           </div>
         ) : error ? (
           <div style={{ ...s.scrollArea, textAlign: 'center', paddingTop: '48px' }}>
-            <div style={{ fontSize: '32px', marginBottom: '12px' }}>⚠️</div>
+            <IconAlertCircle size={32} color={tokens.colors.error} style={{ margin: '0 auto 12px', display: 'block' }} />
             <p role="alert" style={{ color: tokens.colors.error, fontSize: '14px' }}>{error}</p>
           </div>
         ) : (

@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useStudyMind } from '../context'
 import { s, tokens } from '../styles'
 import { EmptyState } from './EmptyState'
+import { IconFileText } from '../icons'
 import { MarkdownRenderer } from '../MarkdownRenderer'
 
 export function SummaryTab() {
@@ -27,7 +28,7 @@ export function SummaryTab() {
     return (
       <div style={s.scrollArea}>
         <EmptyState
-          emoji="📋" text="Generate an AI summary of this course"
+          icon={<IconFileText size={32} color={tokens.colors.textMuted} />} text="Generate an AI summary of this course"
           error={error} buttonLabel="Generate Summary" loading={loading} onClick={generate}
         />
       </div>

@@ -2,7 +2,7 @@ import React from 'react'
 import { s, tokens } from '../styles'
 
 interface Props {
-  emoji:       string
+  icon:        React.ReactNode
   text:        string
   error:       string | null
   buttonLabel: string
@@ -10,10 +10,10 @@ interface Props {
   onClick:     () => void
 }
 
-export function EmptyState({ emoji, text, error, buttonLabel, loading, onClick }: Props) {
+export function EmptyState({ icon, text, error, buttonLabel, loading, onClick }: Props) {
   return (
     <div style={{ textAlign: 'center', padding: '32px 16px' }}>
-      <div style={{ fontSize: '32px', marginBottom: '8px' }}>{emoji}</div>
+      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '8px' }}>{icon}</div>
       <p style={{ color: tokens.colors.textSecondary, fontSize: '14px' }}>{text}</p>
       {error && (
         <p role="alert" style={{ color: tokens.colors.error, fontSize: '13px' }}>{error}</p>
