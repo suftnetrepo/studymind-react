@@ -152,6 +152,27 @@ export function StudyMindProvider({
     }
   }, [client, courseId, userId, credential])
 
+  // Once the course is ready, restore the saved conversation (survives reloads and new logins).
+  // Never overwrites a conversation the user has already started in the meantime.
+  useEffect(() => {
+    if (!isReady) return
+    let cancelled = false
+    client.getChatHistory(courseId, userId)
+      .then(history => {
+        if (cancelled || history.messages.length === 0) return
+        setMessages(prev => prev.length > 0 ? prev : history.messages.map(m => ({
+          id:        m.id,
+          role:      m.role,
+          content:   m.content,
+          sources:   m.sources,
+          timestamp: new Date(m.timestamp),
+        })))
+        if (history.session_id) setSessionId(prev => prev ?? history.session_id ?? undefined)
+      })
+      .catch(() => { /* history is best-effort — start a fresh conversation */ })
+    return () => { cancelled = true }
+  }, [isReady, client, courseId, userId])
+
   const value = useMemo(() => ({
     client, courseId, userId, userRole, courseData, isReady, isLoading, error,
     messages, setMessages, sessionId, setSessionId, sending, setSending, complexity, setComplexity,

@@ -26,6 +26,17 @@ export interface CourseDocument {
   created_at:  string | null
 }
 
+export interface ChatHistory {
+  session_id: string | null
+  messages: {
+    id:        string
+    role:      'user' | 'assistant'
+    content:   string
+    sources:   string[]  // source filenames, deduplicated
+    timestamp: string
+  }[]
+}
+
 export interface ChatResponse {
   answer:     string
   sources:    string[]  // source filenames, deduplicated
@@ -160,6 +171,22 @@ export class StudyMindClient {
       answer:     res.answer,
       sources:    Array.from(new Set((res.sources ?? []).map(c => c.filename))),
       session_id: res.session_id,
+    }
+  }
+
+  /** The user's saved conversation for this course (latest `limit` messages, oldest first). */
+  async getChatHistory(courseId: string, userId: string, limit = 50): Promise<ChatHistory> {
+    const qs  = new URLSearchParams({ course_id: courseId, user_id: userId, limit: String(limit) })
+    const res = await this.request<{
+      session_id: string | null
+      messages: { id: string; role: 'user' | 'assistant'; content: string; sources: RawCitation[]; timestamp: string }[]
+    }>('GET', `/api/v1/chat/history?${qs}`)
+    return {
+      session_id: res.session_id,
+      messages:   res.messages.map(m => ({
+        ...m,
+        sources: Array.from(new Set((m.sources ?? []).map(c => c.filename))),
+      })),
     }
   }
 
