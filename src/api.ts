@@ -190,26 +190,32 @@ export class StudyMindClient {
     }
   }
 
-  async generateQuiz(courseId: string, userId: string, count: number = 5, topic?: string) {
+  async generateQuiz(
+    courseId: string, userId: string, count: number = 5, topic?: string, complexity: Complexity = 'normal',
+  ) {
     const res = await this.request<{ questions: RawQuizQuestion[]; count: number }>(
       'POST', '/api/v1/quiz/generate', {
         course_id:      courseId,
         user_id:        userId,
         question_count: count,
         topic,
+        complexity,
       },
     )
     const questions = res.questions.map(toQuizQuestion)
     return { questions, count: questions.length }
   }
 
-  async generateFlashcards(courseId: string, userId: string, count: number = 20, topic?: string) {
+  async generateFlashcards(
+    courseId: string, userId: string, count: number = 20, topic?: string, complexity: Complexity = 'normal',
+  ) {
     const res = await this.request<{ cards: RawFlashcard[]; count: number }>(
       'POST', '/api/v1/flashcards/generate', {
         course_id: courseId,
         user_id:   userId,
         max_cards: count,
         topic,
+        complexity,
       },
     )
     const cards: Flashcard[] = res.cards.map(c => ({ id: String(c.position), front: c.front, back: c.back }))
@@ -275,11 +281,12 @@ export class StudyMindClient {
     })
   }
 
-  async summarise(courseId: string, userId: string, topic?: string) {
+  async summarise(courseId: string, userId: string, topic?: string, complexity: Complexity = 'normal') {
     return this.request<{ summary: string }>('POST', '/api/v1/summarise', {
       course_id: courseId,
       user_id:   userId,
       topic,
+      complexity,
     })
   }
 }

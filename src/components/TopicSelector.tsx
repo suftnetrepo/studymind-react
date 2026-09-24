@@ -1,6 +1,7 @@
 import React from 'react'
 import { tokens } from '../styles'
-import type { SectionData } from '../types'
+import type { SectionData, Complexity } from '../types'
+import { complexityLabel } from './ComplexitySelector'
 
 interface Props {
   sections: SectionData[]
@@ -77,8 +78,17 @@ export function TopicSelector({ sections, value, onChange, label, disabled }: Pr
   )
 }
 
-/** "Scoped to: <topic>" note shown above generated results. */
-export function ScopeNote({ topic, prefix = 'Scoped to' }: { topic: string; prefix?: string }) {
+/**
+ * Note above generated results saying what they were generated for, e.g.
+ * "Scoped to: Control Flow · Expert". Renders nothing for all content at normal complexity.
+ */
+export function ScopeNote({ topic, complexity, prefix = 'Scoped to' }: {
+  topic:       string
+  complexity?: Complexity
+  prefix?:     string
+}) {
+  const level = complexity && complexity !== 'normal' ? complexityLabel(complexity) : ''
+  if (!topic && !level) return null
   return (
     <div style={{
       display:      'flex',
@@ -96,7 +106,11 @@ export function ScopeNote({ topic, prefix = 'Scoped to' }: { topic: string; pref
         <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
         <circle cx="12" cy="10" r="3"/>
       </svg>
-      <span>{prefix}: <strong style={{ color: tokens.colors.textPrimary }}>{topic}</strong></span>
+      <span>
+        {topic && <>{prefix}: <strong style={{ color: tokens.colors.textPrimary }}>{topic}</strong></>}
+        {topic && level && ' · '}
+        {level && <strong style={{ color: tokens.colors.textPrimary }}>{level}</strong>}
+      </span>
     </div>
   )
 }

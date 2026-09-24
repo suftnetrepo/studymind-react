@@ -4,11 +4,15 @@ import { s, tokens } from '../styles'
 import { EmptyState } from './EmptyState'
 import { IconLayers } from '../icons'
 import { TopicSelector, ScopeNote } from '../components/TopicSelector'
+import { ComplexitySelector } from '../components/ComplexitySelector'
+import type { Complexity } from '../types'
 import type { Flashcard } from '../types'
 
 export function FlashcardsTab() {
-  const { client, courseId, userId, topic, setTopic, courseData } = useStudyMind()
-  const [cardsTopic, setCardsTopic] = useState('')  // topic this set was generated for
+  const { client, courseId, userId, topic, setTopic, courseData, complexity, setComplexity } = useStudyMind()
+  // What this set was generated for (the selectors may have changed since)
+  const [cardsTopic,      setCardsTopic]      = useState('')
+  const [cardsComplexity, setCardsComplexity] = useState<Complexity>('normal')
   const [cards,   setCards]   = useState<Flashcard[]>([])
   const [loading, setLoading] = useState(false)
   const [index,   setIndex]   = useState(0)
@@ -19,9 +23,10 @@ export function FlashcardsTab() {
     setLoading(true)
     setError(null)
     try {
-      const res = await client.generateFlashcards(courseId, userId, 20, topic || undefined)
+      const res = await client.generateFlashcards(courseId, userId, 20, topic || undefined, complexity)
       setCards(res.cards)
       setCardsTopic(topic)
+      setCardsComplexity(complexity)
       setIndex(0)
       setFlipped(false)
     } catch (e: unknown) {
@@ -32,8 +37,11 @@ export function FlashcardsTab() {
   }
 
   const selector = (
-    <TopicSelector sections={courseData.sections ?? []} value={topic} onChange={setTopic}
-      label="Scope to" disabled={loading} />
+    <>
+      <TopicSelector sections={courseData.sections ?? []} value={topic} onChange={setTopic}
+        label="Scope to" disabled={loading} />
+      <ComplexitySelector value={complexity} onChange={setComplexity} disabled={loading} />
+    </>
   )
 
   const card = cards[index]
@@ -60,7 +68,7 @@ export function FlashcardsTab() {
     <>
     {selector}
     <div style={s.scrollArea}>
-      {cardsTopic && <ScopeNote topic={cardsTopic} />}
+      <ScopeNote topic={cardsTopic} complexity={cardsComplexity} />
       <p style={{ textAlign: 'center', fontSize: '12px',
         color: tokens.colors.textMuted, marginBottom: '16px' }}>
         {index + 1} / {cards.length}

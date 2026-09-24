@@ -3,16 +3,11 @@ import { useStudyMind } from '../context'
 import { s, tokens } from '../styles'
 import { MarkdownRenderer } from '../MarkdownRenderer'
 import { IconMessageCircle, IconSend, IconAlertCircle, IconFileText } from '../icons'
-import type { Complexity } from '../types'
+import { ComplexitySelector } from '../components/ComplexitySelector'
+import { CopyButton } from '../components/CopyButton'
 
 let nextId = 0
 const newId = () => `m${++nextId}`
-
-const COMPLEXITY: { level: Complexity; label: string; color: string }[] = [
-  { level: 'simple', label: 'Simple', color: '#10B981' },
-  { level: 'normal', label: 'Normal', color: '#5B7FFF' },
-  { level: 'expert', label: 'Expert', color: '#EF4444' },
-]
 
 export function TutorTab() {
   const {
@@ -58,47 +53,7 @@ export function TutorTab() {
 
   return (
     <>
-      {/* Answer complexity */}
-      <div role="radiogroup" aria-label="Answer complexity" style={{
-        display:         'flex',
-        gap:             '6px',
-        padding:         '10px 14px',
-        borderBottom:    `1px solid ${tokens.colors.border}`,
-        backgroundColor: tokens.colors.bgMuted,
-        flexShrink:      0,
-      }}>
-        {COMPLEXITY.map(({ level, label, color }) => {
-          const active = complexity === level
-          return (
-            <button
-              key={level}
-              role="radio"
-              aria-checked={active}
-              onClick={() => setComplexity(level)}
-              style={{
-                flex:           1,
-                display:        'inline-flex',
-                alignItems:     'center',
-                justifyContent: 'center',
-                gap:            '6px',
-                padding:        '6px 4px',
-                fontSize:       '11px',
-                fontWeight:     active ? 700 : 500,
-                fontFamily:     tokens.font.sans,
-                borderRadius:   tokens.radius.md,
-                border:         `1px solid ${active ? tokens.colors.primary : tokens.colors.border}`,
-                background:     active ? tokens.colors.primaryBg : tokens.colors.white,
-                color:          active ? tokens.colors.primary : tokens.colors.textSecondary,
-                cursor:         'pointer',
-                transition:     'all 0.15s',
-              }}
-            >
-              <span aria-hidden style={{ width: 7, height: 7, borderRadius: '50%', background: color }} />
-              {label}
-            </button>
-          )
-        })}
-      </div>
+      <ComplexitySelector value={complexity} onChange={setComplexity} />
 
       <div ref={scrollRef} style={s.scrollArea} aria-live="polite">
         {messages.length === 0 && (
@@ -111,18 +66,25 @@ export function TutorTab() {
             </p>
           </div>
         )}
-        {messages.map(m => (
-          <div key={m.id} style={m.role === 'user' ? { ...s.userMsg, whiteSpace: 'pre-wrap' } : s.aiMsg}>
-            {m.role === 'user' ? m.content : m.isError ? (
-              <div role="alert" style={{ display: 'flex', gap: '8px', alignItems: 'flex-start',
-                color: tokens.colors.error, fontSize: '13px' }}>
-                <IconAlertCircle size={16} color={tokens.colors.error} style={{ marginTop: '2px' }} />
-                <span>{m.content}</span>
-              </div>
-            ) : <MarkdownRenderer content={m.content} />}
-            {m.role === 'assistant' && m.sources && m.sources.length > 0 && (
-              <div style={{ marginTop: '6px', display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                {m.sources.map((src, j) => (
+        {messages.map(m => m.role === 'user' ? (
+          <div key={m.id} style={{ ...s.userMsg, whiteSpace: 'pre-wrap' }}>{m.content}</div>
+        ) : m.isError ? (
+          <div key={m.id} style={s.aiMsg}>
+            <div role="alert" style={{ display: 'flex', gap: '8px', alignItems: 'flex-start',
+              color: tokens.colors.error, fontSize: '13px' }}>
+              <IconAlertCircle size={16} color={tokens.colors.error} style={{ marginTop: '2px' }} />
+              <span>{m.content}</span>
+            </div>
+          </div>
+        ) : (
+          <div key={m.id} style={{ marginBottom: '12px' }}>
+            <div style={{ ...s.aiMsg, marginBottom: '4px' }}>
+              <MarkdownRenderer content={m.content} />
+            </div>
+            {/* Sources + copy */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', maxWidth: '90%', paddingLeft: '4px' }}>
+              <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', flex: 1 }}>
+                {m.sources?.map((src, j) => (
                   <span key={j} style={{
                     display: 'inline-flex', alignItems: 'center', gap: '4px',
                     fontSize: '10px', color: tokens.colors.primary,
@@ -135,13 +97,29 @@ export function TutorTab() {
                   </span>
                 ))}
               </div>
-            )}
+              <CopyButton text={m.content} size={13} title="Copy answer" />
+            </div>
           </div>
         ))}
         {sending && (
           <div style={{ ...s.aiMsg, color: tokens.colors.textMuted }}>Thinking…</div>
         )}
       </div>
+      {messages.length > 0 && (
+        <div style={{
+          display: 'flex', justifyContent: 'flex-end',
+          padding: '4px 14px', borderTop: `1px solid ${tokens.colors.border}`,
+          background: tokens.colors.white, flexShrink: 0,
+        }}>
+          <CopyButton
+            text={messages.map(m => `${m.role === 'user' ? 'You' : 'AI Tutor'}: ${m.content}`).join('\n\n')}
+            size={13}
+            label="Copy conversation"
+            title="Copy the whole conversation"
+          />
+        </div>
+      )}
+
       <div style={s.inputRow}>
         <textarea
           style={s.input}

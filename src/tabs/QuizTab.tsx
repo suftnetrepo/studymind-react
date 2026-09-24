@@ -4,12 +4,16 @@ import { s, tokens } from '../styles'
 import { EmptyState } from './EmptyState'
 import { IconClipboardList } from '../icons'
 import { TopicSelector, ScopeNote } from '../components/TopicSelector'
+import { ComplexitySelector } from '../components/ComplexitySelector'
+import type { Complexity } from '../types'
 import type { QuizQuestion } from '../types'
 
 export function QuizTab() {
-  const { client, courseId, userId, topic, setTopic, courseData } = useStudyMind()
+  const { client, courseId, userId, topic, setTopic, courseData, complexity, setComplexity } = useStudyMind()
   const [questions, setQuestions] = useState<QuizQuestion[]>([])
-  const [quizTopic, setQuizTopic] = useState('')  // topic this quiz was generated for
+  // What this quiz was generated for (the selectors may have changed since)
+  const [quizTopic,      setQuizTopic]      = useState('')
+  const [quizComplexity, setQuizComplexity] = useState<Complexity>('normal')
   const [loading,   setLoading]   = useState(false)
   const [answers,   setAnswers]   = useState<Record<string, string>>({})
   const [submitted, setSubmitted] = useState(false)
@@ -19,9 +23,10 @@ export function QuizTab() {
     setLoading(true)
     setError(null)
     try {
-      const res = await client.generateQuiz(courseId, userId, 5, topic || undefined)
+      const res = await client.generateQuiz(courseId, userId, 5, topic || undefined, complexity)
       setQuestions(res.questions)
       setQuizTopic(topic)
+      setQuizComplexity(complexity)
       setAnswers({})
       setSubmitted(false)
     } catch (e: unknown) {
@@ -32,8 +37,11 @@ export function QuizTab() {
   }
 
   const selector = (
-    <TopicSelector sections={courseData.sections ?? []} value={topic} onChange={setTopic}
-      label="Scope to" disabled={loading} />
+    <>
+      <TopicSelector sections={courseData.sections ?? []} value={topic} onChange={setTopic}
+        label="Scope to" disabled={loading} />
+      <ComplexitySelector value={complexity} onChange={setComplexity} disabled={loading} />
+    </>
   )
 
   if (questions.length === 0) {
@@ -57,7 +65,7 @@ export function QuizTab() {
     <>
     {selector}
     <div style={s.scrollArea}>
-      {quizTopic && <ScopeNote topic={quizTopic} />}
+      <ScopeNote topic={quizTopic} complexity={quizComplexity} />
       {submitted && (
         <div style={{ ...s.card, background: tokens.colors.primaryBg,
           borderColor: tokens.colors.primary, marginBottom: '16px' }}>
