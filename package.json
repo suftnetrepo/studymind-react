@@ -20,7 +20,9 @@
     "build": "tsup",
     "dev": "tsup --watch",
     "lint": "tsc --noEmit",
-    "prepare": "npm run build"
+    "prepare": "npm run build",
+    "example": "cd examples/nextjs && npm run dev",
+    "example:build": "npm run build && cd examples/nextjs && npm install && npm run build"
   },
   "keywords": [
     "studymind",
