@@ -10,6 +10,22 @@ export interface CourseStatus {
   error?:      string | null
 }
 
+export type DocumentStatus = 'pending' | 'indexing' | 'ready' | 'failed'
+
+export interface CourseDocument {
+  id:          string
+  filename:    string
+  status:      DocumentStatus
+  chunk_count: number
+  size:        number
+  format:      string | null
+  url:         string
+  uploaded_by: string | null
+  indexed_at:  string | null
+  error:       string | null
+  created_at:  string | null
+}
+
 export interface ChatResponse {
   answer:     string
   sources:    string[]  // source filenames, deduplicated
@@ -164,6 +180,65 @@ export class StudyMindClient {
     )
     const cards: Flashcard[] = res.cards.map(c => ({ id: String(c.position), front: c.front, back: c.back }))
     return { cards, count: cards.length }
+  }
+
+  // ── Course materials (tutor/admin) ──────────────────────────────────────
+
+  async listDocuments(courseId: string) {
+    const qs = new URLSearchParams({ course_id: courseId })
+    return this.request<CourseDocument[]>('GET', `/api/v1/documents/list?${qs}`)
+  }
+
+  /** Upload a file (PDF, DOCX, TXT, MD · max 20MB). `onProgress` receives 0–100. */
+  async uploadDocument(
+    courseId:    string,
+    userId:      string,
+    file:        File,
+    onProgress?: (pct: number) => void,
+  ): Promise<CourseDocument> {
+    const form = new FormData()
+    form.append('course_id', courseId)
+    form.append('user_id',   userId)
+    form.append('file',      file)
+    return this.sendForm('/api/v1/documents/upload', form, onProgress)
+  }
+
+  async deleteDocument(courseId: string, documentId: string) {
+    const qs = new URLSearchParams({ course_id: courseId })
+    return this.request<{ deleted: boolean; document_id: string }>(
+      'DELETE', `/api/v1/documents/${encodeURIComponent(documentId)}?${qs}`,
+    )
+  }
+
+  async replaceDocument(
+    courseId:    string,
+    documentId:  string,
+    file:        File,
+    onProgress?: (pct: number) => void,
+  ): Promise<CourseDocument> {
+    const form = new FormData()
+    form.append('course_id', courseId)
+    form.append('file',      file)
+    return this.sendForm(`/api/v1/documents/${encodeURIComponent(documentId)}/replace`, form, onProgress)
+  }
+
+  /** multipart POST via XHR — fetch() can't report upload progress. */
+  private sendForm<T>(path: string, form: FormData, onProgress?: (pct: number) => void): Promise<T> {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest()
+      xhr.open('POST', `${this.apiUrl}${path}`)
+      xhr.setRequestHeader('Authorization', `Bearer ${this.bearer}`)
+      xhr.responseType = 'json'
+      if (onProgress) {
+        xhr.upload.onprogress = e => { if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100)) }
+      }
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) resolve(xhr.response as T)
+        else reject(new Error(errorMessage(xhr.response, xhr.status)))
+      }
+      xhr.onerror = () => reject(new Error('Network error during upload'))
+      xhr.send(form)
+    })
   }
 
   async summarise(courseId: string, userId: string, topic?: string) {

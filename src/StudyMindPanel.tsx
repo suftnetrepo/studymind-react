@@ -4,6 +4,7 @@ import { TutorTab }      from './tabs/TutorTab'
 import { QuizTab }       from './tabs/QuizTab'
 import { FlashcardsTab } from './tabs/FlashcardsTab'
 import { SummaryTab }    from './tabs/SummaryTab'
+import { MaterialsTab }  from './tabs/MaterialsTab'
 import { s, tokens, themeVars } from './styles'
 import type { StudyMindConfig, StudyMindPanelProps, TabId } from './types'
 
@@ -13,6 +14,10 @@ const TABS: { id: TabId; label: string; emoji: string }[] = [
   { id: 'flashcards', label: 'Flashcards', emoji: '🃏' },
   { id: 'summary',    label: 'Summary',    emoji: '📋' },
 ]
+const MATERIALS_TAB = { id: 'materials' as TabId, label: 'Materials', emoji: '📁' }
+
+// UI gating only — the API also rejects uploads from student session tokens
+const canManageMaterials = (role: string) => role === 'tutor' || role === 'admin'
 
 declare const process: { env: Record<string, string | undefined> }
 
@@ -47,7 +52,8 @@ function useResolvedTheme(theme: 'light' | 'dark' | 'auto'): 'light' | 'dark' {
 
 function PanelInner() {
   const [activeTab, setActiveTab] = useState<TabId>('tutor')
-  const { isReady, isLoading, error } = useStudyMind()
+  const { isReady, isLoading, error, userRole } = useStudyMind()
+  const tabs = canManageMaterials(userRole) ? [...TABS, MATERIALS_TAB] : TABS
 
   return (
     <>
@@ -60,7 +66,7 @@ function PanelInner() {
       </div>
 
       <div style={s.tabs} role="tablist">
-        {TABS.map(tab => (
+        {tabs.map(tab => (
           <button
             key={tab.id}
             role="tab"
@@ -96,6 +102,7 @@ function PanelInner() {
             {activeTab === 'quiz'       && <QuizTab />}
             {activeTab === 'flashcards' && <FlashcardsTab />}
             {activeTab === 'summary'    && <SummaryTab />}
+            {activeTab === 'materials'  && canManageMaterials(userRole) && <MaterialsTab />}
           </>
         )}
       </div>

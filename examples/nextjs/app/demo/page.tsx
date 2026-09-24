@@ -51,10 +51,11 @@ const MOCK_COURSE = {
   ],
 }
 
+// Tutor so the Materials tab appears. Change role to 'student' to see the student view.
 const MOCK_USER = {
-  id:   'demo_student_001',
-  role: 'student' as const,
-  name: 'Demo Student',
+  id:   'demo_tutor_001',
+  role: 'tutor' as const,
+  name: 'Demo Tutor',
 }
 
 type PanelStatus = 'waiting' | 'ready' | 'error'
@@ -187,6 +188,9 @@ export default function DemoPage() {
               </p>
               <p className="text-gray-400">
                 User ID: <span className="text-white">{MOCK_USER.id}</span>
+              </p>
+              <p className="text-gray-400">
+                Role: <span className="text-white">{MOCK_USER.role}</span>
               </p>
               <p className="text-gray-400">
                 API URL: <span className="text-white">{apiUrl ?? '—'}</span>

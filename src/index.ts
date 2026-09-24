@@ -2,7 +2,7 @@ export { StudyMindPanel } from './StudyMindPanel'
 export { StudyMindProvider, useStudyMind } from './context'
 export { StudyMindClient } from './api'
 export { MarkdownRenderer } from './MarkdownRenderer'
-export type { CourseStatus, ChatResponse } from './api'
+export type { CourseStatus, ChatResponse, CourseDocument, DocumentStatus } from './api'
 export type {
   StudyMindPanelProps,
   StudyMindConfig,

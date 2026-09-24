@@ -41,7 +41,7 @@ export interface StudyMindPanelProps {
   onError?:      (error: Error) => void
 }
 
-export type TabId = 'tutor' | 'quiz' | 'flashcards' | 'summary'
+export type TabId = 'tutor' | 'quiz' | 'flashcards' | 'summary' | 'materials'
 
 export interface Message {
   id:        string
