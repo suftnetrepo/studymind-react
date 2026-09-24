@@ -8,10 +8,11 @@ npm install                         # installs the package from ../.. (its dist/
 npm run dev                         # http://localhost:3000/demo
 ```
 
-After changing the package source, rebuild it (`npm run build` in the repo root) and re-run
-`npm install` here — `.npmrc` sets `install-links=true`, so the package is copied rather than
-symlinked (a symlink would load the repo root's React and break hooks). From the repo root,
-`npm run example:build` does all of this and builds the app.
+After changing the package source, run `npm run example:install` from the repo root. It rebuilds
+the package and reinstalls it here. `.npmrc` sets `install-links=true`, so the package is copied
+rather than symlinked (a symlink would load the repo root's React and break hooks), and npm won't
+refresh that copy while the version number is unchanged — the script removes it first.
+`npm run example:build` does the same and then builds the app.
 
 ## How it works
 

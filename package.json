@@ -22,7 +22,8 @@
     "lint": "tsc --noEmit",
     "prepare": "npm run build",
     "example": "cd examples/nextjs && npm run dev",
-    "example:build": "npm run build && cd examples/nextjs && npm install && npm run build"
+    "example:build": "npm run example:install && cd examples/nextjs && npm run build",
+    "example:install": "npm run build && cd examples/nextjs && node -e \"require('fs').rmSync('node_modules/@studymind/react',{recursive:true,force:true})\" && npm install"
   },
   "keywords": [
     "studymind",

@@ -6,7 +6,8 @@ import type { CSSProperties } from 'react'
 type Palette = Record<
   | 'primary' | 'primaryBg' | 'navy' | 'white' | 'onPrimary' | 'bgCard' | 'bgMuted' | 'border'
   | 'textPrimary' | 'textSecondary' | 'textMuted'
-  | 'success' | 'successBg' | 'error' | 'errorBg' | 'warning',
+  | 'success' | 'successBg' | 'error' | 'errorBg' | 'warning'
+  | 'codeBg' | 'codeText' | 'codeBlockBg',
   string
 >
 
@@ -28,6 +29,9 @@ export const palettes: Record<'light' | 'dark', Palette> = {
     error:         '#EF4444',
     errorBg:       '#FEF2F2',
     warning:       '#F59E0B',
+    codeBg:        '#F1F5F9',
+    codeText:      '#E11D48',
+    codeBlockBg:   '#1E293B',
   },
   dark: {
     primary:       '#7B97FF',
@@ -46,6 +50,9 @@ export const palettes: Record<'light' | 'dark', Palette> = {
     error:         '#F87171',
     errorBg:       '#3A1A1D',
     warning:       '#FBBF24',
+    codeBg:        '#0B1020',
+    codeText:      '#FB7185',
+    codeBlockBg:   '#0B1020',
   },
 }
 
@@ -207,8 +214,8 @@ export const s = {
     maxWidth:     '90%',
     width:        'fit-content',
     lineHeight:   1.5,
-    whiteSpace:   'pre-wrap',
     wordBreak:    'break-word',
+    minWidth:     0,
   },
   card: {
     background:   c.bgMuted,

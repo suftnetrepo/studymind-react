@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { useStudyMind } from '../context'
 import { s, tokens } from '../styles'
+import { MarkdownRenderer } from '../MarkdownRenderer'
 import type { Message } from '../types'
 
 let nextId = 0
@@ -58,11 +59,20 @@ export function TutorTab() {
           </div>
         )}
         {messages.map(m => (
-          <div key={m.id} style={m.role === 'user' ? s.userMsg : s.aiMsg}>
-            {m.content}
-            {m.sources && m.sources.length > 0 && (
-              <div style={{ marginTop: '8px', fontSize: '11px', color: tokens.colors.textMuted }}>
-                Sources: {m.sources.join(', ')}
+          <div key={m.id} style={m.role === 'user' ? { ...s.userMsg, whiteSpace: 'pre-wrap' } : s.aiMsg}>
+            {m.role === 'user' ? m.content : <MarkdownRenderer content={m.content} />}
+            {m.role === 'assistant' && m.sources && m.sources.length > 0 && (
+              <div style={{ marginTop: '6px', display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                {m.sources.map((src, j) => (
+                  <span key={j} style={{
+                    fontSize: '10px', color: tokens.colors.primary,
+                    background: tokens.colors.primaryBg,
+                    padding: '2px 7px', borderRadius: '10px',
+                    fontWeight: 600,
+                  }}>
+                    📄 {src}
+                  </span>
+                ))}
               </div>
             )}
           </div>

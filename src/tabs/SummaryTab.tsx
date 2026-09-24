@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useStudyMind } from '../context'
 import { s, tokens } from '../styles'
 import { EmptyState } from './EmptyState'
+import { MarkdownRenderer } from '../MarkdownRenderer'
 
 export function SummaryTab() {
   const { client, courseId, userId } = useStudyMind()
@@ -35,9 +36,8 @@ export function SummaryTab() {
 
   return (
     <div style={s.scrollArea}>
-      <div style={{ ...s.card, lineHeight: 1.6, fontSize: '14px',
-        color: tokens.colors.textPrimary, whiteSpace: 'pre-wrap' }}>
-        {summary}
+      <div style={s.card}>
+        <MarkdownRenderer content={summary} />
       </div>
       {error && <p role="alert" style={{ color: tokens.colors.error, fontSize: '13px' }}>{error}</p>}
       <button style={s.btn('outline')} onClick={generate} disabled={loading}>
