@@ -1,4 +1,4 @@
-import type { CourseData, QuizQuestion, Flashcard } from './types'
+import type { CourseData, Complexity, QuizQuestion, Flashcard } from './types'
 
 const DEFAULT_API_URL = 'https://api.aismartlearner.com'
 
@@ -140,13 +140,20 @@ export class StudyMindClient {
     return this.request<CourseStatus>('GET', `/api/v1/courses/status?${qs}`)
   }
 
-  async chat(courseId: string, userId: string, message: string, sessionId?: string): Promise<ChatResponse> {
+  async chat(
+    courseId:    string,
+    userId:      string,
+    message:     string,
+    sessionId?:  string,
+    complexity:  Complexity = 'normal',
+  ): Promise<ChatResponse> {
     const res = await this.request<{ answer: string; sources: RawCitation[]; session_id: string | null }>(
       'POST', '/api/v1/chat', {
         course_id:  courseId,
         user_id:    userId,
         message,
         session_id: sessionId,
+        complexity,
       },
     )
     return {

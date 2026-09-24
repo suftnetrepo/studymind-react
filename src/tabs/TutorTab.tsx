@@ -3,17 +3,24 @@ import { useStudyMind } from '../context'
 import { s, tokens } from '../styles'
 import { MarkdownRenderer } from '../MarkdownRenderer'
 import { IconMessageCircle, IconSend, IconAlertCircle, IconFileText } from '../icons'
-import type { Message } from '../types'
+import type { Complexity } from '../types'
 
 let nextId = 0
 const newId = () => `m${++nextId}`
 
+const COMPLEXITY: { level: Complexity; label: string; color: string }[] = [
+  { level: 'simple', label: 'Simple', color: '#10B981' },
+  { level: 'normal', label: 'Normal', color: '#5B7FFF' },
+  { level: 'expert', label: 'Expert', color: '#EF4444' },
+]
+
 export function TutorTab() {
-  const { client, courseId, userId } = useStudyMind()
-  const [messages,  setMessages]  = useState<Message[]>([])
-  const [input,     setInput]     = useState('')
-  const [sending,   setSending]   = useState(false)
-  const [sessionId, setSessionId] = useState<string | undefined>()
+  const {
+    client, courseId, userId,
+    messages, setMessages, sessionId, setSessionId,
+    sending, setSending, complexity, setComplexity,
+  } = useStudyMind()
+  const [input, setInput] = useState('')
   const scrollRef = useRef<HTMLDivElement>(null)
 
   // Scroll only the message list — scrollIntoView would also scroll the host page
@@ -30,7 +37,7 @@ export function TutorTab() {
     setMessages(prev => [...prev, { id: newId(), role: 'user', content: text, timestamp: new Date() }])
 
     try {
-      const res = await client.chat(courseId, userId, text, sessionId)
+      const res = await client.chat(courseId, userId, text, sessionId, complexity)
       if (res.session_id) setSessionId(res.session_id)
       setMessages(prev => [...prev, {
         id: newId(), role: 'assistant',
@@ -51,6 +58,48 @@ export function TutorTab() {
 
   return (
     <>
+      {/* Answer complexity */}
+      <div role="radiogroup" aria-label="Answer complexity" style={{
+        display:         'flex',
+        gap:             '6px',
+        padding:         '10px 14px',
+        borderBottom:    `1px solid ${tokens.colors.border}`,
+        backgroundColor: tokens.colors.bgMuted,
+        flexShrink:      0,
+      }}>
+        {COMPLEXITY.map(({ level, label, color }) => {
+          const active = complexity === level
+          return (
+            <button
+              key={level}
+              role="radio"
+              aria-checked={active}
+              onClick={() => setComplexity(level)}
+              style={{
+                flex:           1,
+                display:        'inline-flex',
+                alignItems:     'center',
+                justifyContent: 'center',
+                gap:            '6px',
+                padding:        '6px 4px',
+                fontSize:       '11px',
+                fontWeight:     active ? 700 : 500,
+                fontFamily:     tokens.font.sans,
+                borderRadius:   tokens.radius.md,
+                border:         `1px solid ${active ? tokens.colors.primary : tokens.colors.border}`,
+                background:     active ? tokens.colors.primaryBg : tokens.colors.white,
+                color:          active ? tokens.colors.primary : tokens.colors.textSecondary,
+                cursor:         'pointer',
+                transition:     'all 0.15s',
+              }}
+            >
+              <span aria-hidden style={{ width: 7, height: 7, borderRadius: '50%', background: color }} />
+              {label}
+            </button>
+          )
+        })}
+      </div>
+
       <div ref={scrollRef} style={s.scrollArea} aria-live="polite">
         {messages.length === 0 && (
           <div style={{ textAlign: 'center', padding: '32px 16px' }}>

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { StudyMindClient } from './api'
-import type { StudyMindConfig, CourseData, UserRole } from './types'
+import type { StudyMindConfig, CourseData, UserRole, Message, Complexity } from './types'
 
 const POLL_INTERVAL_MS  = 2000
 const MAX_POLL_ATTEMPTS = 30  // ~60s
@@ -14,6 +14,16 @@ interface StudyMindContextValue {
   isReady:    boolean
   isLoading:  boolean
   error:      string | null
+  // AI Tutor conversation — held here (not in TutorTab) so it survives tab switches,
+  // including a reply that arrives while another tab is open
+  messages:      Message[]
+  setMessages:   React.Dispatch<React.SetStateAction<Message[]>>
+  sessionId:     string | undefined
+  setSessionId:  React.Dispatch<React.SetStateAction<string | undefined>>
+  sending:       boolean
+  setSending:    React.Dispatch<React.SetStateAction<boolean>>
+  complexity:    Complexity
+  setComplexity: React.Dispatch<React.SetStateAction<Complexity>>
 }
 
 const StudyMindContext = createContext<StudyMindContextValue | null>(null)
@@ -46,6 +56,18 @@ export function StudyMindProvider({
   const [isReady,   setIsReady]   = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [error,     setError]     = useState<string | null>(null)
+
+  const [messages,   setMessages]   = useState<Message[]>([])
+  const [sessionId,  setSessionId]  = useState<string | undefined>()
+  const [sending,    setSending]    = useState(false)
+  const [complexity, setComplexity] = useState<Complexity>('normal')
+
+  // A different course or user starts a fresh conversation
+  useEffect(() => {
+    setMessages([])
+    setSessionId(undefined)
+    setSending(false)
+  }, [courseId, userId])
 
   const apiKey     = config?.apiKey ?? ''
   const baseUrl    = apiUrl ?? config?.apiUrl
@@ -132,7 +154,9 @@ export function StudyMindProvider({
 
   const value = useMemo(() => ({
     client, courseId, userId, userRole, courseData, isReady, isLoading, error,
-  }), [client, courseId, userId, userRole, courseData, isReady, isLoading, error])
+    messages, setMessages, sessionId, setSessionId, sending, setSending, complexity, setComplexity,
+  }), [client, courseId, userId, userRole, courseData, isReady, isLoading, error,
+      messages, sessionId, sending, complexity])
 
   return (
     <StudyMindContext.Provider value={value}>
