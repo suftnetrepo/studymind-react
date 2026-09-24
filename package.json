@@ -12,14 +12,23 @@
       "require": "./dist/index.js"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "sideEffects": false,
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "prepare": "npm run build"
   },
-  "keywords": ["studymind", "ai", "education", "react", "nextjs"],
+  "keywords": [
+    "studymind",
+    "ai",
+    "education",
+    "react",
+    "nextjs"
+  ],
   "author": "StudyMind AI",
   "license": "MIT",
   "peerDependencies": {
