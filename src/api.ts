@@ -1,4 +1,4 @@
-import type { CourseData, Complexity, QuizQuestion, Flashcard } from './types'
+import type { CourseData, Complexity, QuizQuestion, Flashcard, SavedSummary } from './types'
 
 const DEFAULT_API_URL = 'https://api.aismartlearner.com'
 
@@ -76,6 +76,23 @@ function toQuizQuestion(q: RawQuizQuestion): QuizQuestion {
     options:     options.map(o => o.text),
     answer:      correct ? correct.text : q.correct_answer,
     explanation: q.explanation || undefined,
+  }
+}
+
+interface RawSummary {
+  summary:     string | null
+  topic?:      string | null
+  complexity?: string | null
+  created_at?: string | null
+}
+
+function toSavedSummary(res: RawSummary, topic = '', complexity: Complexity = 'normal'): SavedSummary | null {
+  if (!res.summary) return null
+  return {
+    content:    res.summary,
+    topic:      res.topic ?? topic,
+    complexity: (res.complexity as Complexity | null | undefined) ?? complexity,
+    createdAt:  res.created_at ? new Date(res.created_at) : null,
   }
 }
 
@@ -281,12 +298,27 @@ export class StudyMindClient {
     })
   }
 
-  async summarise(courseId: string, userId: string, topic?: string, complexity: Complexity = 'normal') {
-    return this.request<{ summary: string }>('POST', '/api/v1/summarise', {
+  /** Generate a summary. The server also saves it as the latest for this course/user/topic. */
+  async summarise(
+    courseId: string, userId: string, topic?: string, complexity: Complexity = 'normal',
+  ): Promise<SavedSummary> {
+    const res = await this.request<RawSummary>('POST', '/api/v1/summarise', {
       course_id: courseId,
       user_id:   userId,
       topic,
       complexity,
     })
+    return toSavedSummary(res, topic ?? '', complexity)!
+  }
+
+  /**
+   * The saved summary: for `topic` if given ('' = all content), otherwise the most recent
+   * one on any topic. Null if none has been generated yet.
+   */
+  async getSummary(courseId: string, userId: string, topic?: string): Promise<SavedSummary | null> {
+    const params = new URLSearchParams({ course_id: courseId, user_id: userId })
+    if (topic !== undefined) params.append('topic', topic)
+    const res = await this.request<RawSummary>('GET', `/api/v1/summary?${params}`)
+    return toSavedSummary(res)
   }
 }

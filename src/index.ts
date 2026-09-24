@@ -11,6 +11,8 @@ export type {
   LectureData,
   UserRole,
   TabId,
+  Complexity,
+  SavedSummary,
   Message,
   QuizQuestion,
   Flashcard,

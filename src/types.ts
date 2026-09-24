@@ -43,6 +43,14 @@ export interface StudyMindPanelProps {
 
 export type Complexity = 'simple' | 'normal' | 'expert'
 
+/** A generated summary and what it was generated for. */
+export interface SavedSummary {
+  content:    string
+  topic:      string        // '' = all content
+  complexity: Complexity
+  createdAt:  Date | null
+}
+
 export type TabId = 'tutor' | 'quiz' | 'flashcards' | 'summary' | 'materials'
 
 export interface Message {

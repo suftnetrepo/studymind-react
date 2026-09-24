@@ -8,14 +8,12 @@ import { TopicSelector, ScopeNote } from '../components/TopicSelector'
 import { ComplexitySelector } from '../components/ComplexitySelector'
 import { CopyButton } from '../components/CopyButton'
 import { IconShare } from '../icons'
-import type { Complexity } from '../types'
 
 export function SummaryTab() {
-  const { client, courseId, userId, topic, setTopic, courseData, complexity, setComplexity } = useStudyMind()
-  // What this summary was generated for (the selectors may have changed since)
-  const [summaryTopic,      setSummaryTopic]      = useState('')
-  const [summaryComplexity, setSummaryComplexity] = useState<Complexity>('normal')
-  const [summary, setSummary] = useState<string | null>(null)
+  const {
+    client, courseId, userId, topic, setTopic, courseData, complexity, setComplexity,
+    summary, setSummary,   // lives in context: survives tab switches, restored after reload/login
+  } = useStudyMind()
   const [loading, setLoading] = useState(false)
   const [error,   setError]   = useState<string | null>(null)
 
@@ -23,10 +21,7 @@ export function SummaryTab() {
     setLoading(true)
     setError(null)
     try {
-      const res = await client.summarise(courseId, userId, topic || undefined, complexity)
-      setSummary(res.summary)
-      setSummaryTopic(topic)
-      setSummaryComplexity(complexity)
+      setSummary(await client.summarise(courseId, userId, topic || undefined, complexity))
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed to generate summary')
     } finally {
@@ -45,7 +40,10 @@ export function SummaryTab() {
   const canShare = typeof navigator !== 'undefined' && typeof navigator.share === 'function'
   async function share() {
     try {
-      await navigator.share({ title: summaryTopic ? `Summary: ${summaryTopic}` : 'Course summary', text: summary ?? '' })
+      await navigator.share({
+        title: summary?.topic ? `Summary: ${summary.topic}` : 'Course summary',
+        text:  summary?.content ?? '',
+      })
     } catch { /* user cancelled or share failed */ }
   }
 
@@ -67,15 +65,15 @@ export function SummaryTab() {
     <>
     {selector}
     <div style={s.scrollArea}>
-      <ScopeNote topic={summaryTopic} complexity={summaryComplexity} prefix="Summary of" />
+      <ScopeNote topic={summary.topic} complexity={summary.complexity} prefix="Summary of" />
       <div style={s.card}>
-        <MarkdownRenderer content={summary} />
+        <MarkdownRenderer content={summary.content} />
       </div>
       {error && <p role="alert" style={{ color: tokens.colors.error, fontSize: '13px' }}>{error}</p>}
 
       {/* Actions */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
-        <CopyButton text={summary} label="Copy" title="Copy summary" />
+        <CopyButton text={summary.content} label="Copy" title="Copy summary" />
         {canShare && (
           <button
             onClick={share}

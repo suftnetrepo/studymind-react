@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { StudyMindClient } from './api'
-import type { StudyMindConfig, CourseData, UserRole, Message, Complexity } from './types'
+import type { StudyMindConfig, CourseData, UserRole, Message, Complexity, SavedSummary } from './types'
 
 const POLL_INTERVAL_MS  = 2000
 const MAX_POLL_ATTEMPTS = 30  // ~60s
@@ -28,6 +28,10 @@ interface StudyMindContextValue {
   // picking it once applies to all three
   topic:         string
   setTopic:      React.Dispatch<React.SetStateAction<string>>
+  // Latest summary — held here so it survives tab switches, and restored from the
+  // server once the course is ready (survives reloads and new logins)
+  summary:       SavedSummary | null
+  setSummary:    React.Dispatch<React.SetStateAction<SavedSummary | null>>
 }
 
 const StudyMindContext = createContext<StudyMindContextValue | null>(null)
@@ -66,6 +70,7 @@ export function StudyMindProvider({
   const [sending,    setSending]    = useState(false)
   const [complexity, setComplexity] = useState<Complexity>('normal')
   const [topic,      setTopic]      = useState('')
+  const [summary,    setSummary]    = useState<SavedSummary | null>(null)
 
   // A different course or user starts a fresh conversation
   useEffect(() => {
@@ -73,6 +78,7 @@ export function StudyMindProvider({
     setSessionId(undefined)
     setSending(false)
     setTopic('')
+    setSummary(null)
   }, [courseId, userId])
 
   const apiKey     = config?.apiKey ?? ''
@@ -179,12 +185,23 @@ export function StudyMindProvider({
     return () => { cancelled = true }
   }, [isReady, client, courseId, userId])
 
+  // Restore the most recent saved summary. Never replaces one generated in the meantime,
+  // and doesn't touch the shared topic/complexity selectors — the summary carries its own.
+  useEffect(() => {
+    if (!isReady) return
+    let cancelled = false
+    client.getSummary(courseId, userId)
+      .then(saved => { if (!cancelled && saved) setSummary(prev => prev ?? saved) })
+      .catch(() => { /* best-effort — the user can generate a new one */ })
+    return () => { cancelled = true }
+  }, [isReady, client, courseId, userId])
+
   const value = useMemo(() => ({
     client, courseId, userId, userRole, courseData, isReady, isLoading, error,
     messages, setMessages, sessionId, setSessionId, sending, setSending, complexity, setComplexity,
-    topic, setTopic,
+    topic, setTopic, summary, setSummary,
   }), [client, courseId, userId, userRole, courseData, isReady, isLoading, error,
-      messages, sessionId, sending, complexity, topic])
+      messages, sessionId, sending, complexity, topic, summary])
 
   return (
     <StudyMindContext.Provider value={value}>
