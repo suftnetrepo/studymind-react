@@ -191,6 +191,14 @@ export class StudyMindClient {
     }
   }
 
+  /** Close the current conversation; the next chat() starts a new one and history comes back empty. */
+  async newChat(courseId: string, userId: string) {
+    return this.request<{ success: boolean; closed_sessions: number }>('POST', '/api/v1/chat/new', {
+      course_id: courseId,
+      user_id:   userId,
+    })
+  }
+
   /** The user's saved conversation for this course (latest `limit` messages, oldest first). */
   async getChatHistory(courseId: string, userId: string, limit = 50): Promise<ChatHistory> {
     const qs  = new URLSearchParams({ course_id: courseId, user_id: userId, limit: String(limit) })

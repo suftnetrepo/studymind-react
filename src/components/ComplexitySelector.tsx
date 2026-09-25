@@ -11,20 +11,24 @@ const LEVELS: { value: Complexity; label: string; color: string; bg: string }[] 
 export const complexityLabel = (c: Complexity) => LEVELS.find(l => l.value === c)?.label ?? c
 
 /** Simple / Normal / Expert pills — shared by AI Tutor, Quiz, Flashcards and Summary. */
-export function ComplexitySelector({ value, onChange, disabled }: {
+export function ComplexitySelector({ value, onChange, disabled, actions }: {
   value:     Complexity
   onChange:  (value: Complexity) => void
   disabled?: boolean
+  /** Extra controls shown on the right of the same bar (e.g. New chat, Copy). */
+  actions?:  React.ReactNode
 }) {
   return (
-    <div role="radiogroup" aria-label="Complexity" style={{
+    <div style={{
       display:      'flex',
+      alignItems:   'center',
       gap:          '6px',
       padding:      '10px 14px',
       borderBottom: `1px solid ${tokens.colors.border}`,
       background:   tokens.colors.bgMuted,
       flexShrink:   0,
     }}>
+      <div role="radiogroup" aria-label="Complexity" style={{ display: 'flex', gap: '6px', flex: 1, minWidth: 0 }}>
       {LEVELS.map(level => {
         const active = value === level.value
         return (
@@ -60,6 +64,8 @@ export function ComplexitySelector({ value, onChange, disabled }: {
           </button>
         )
       })}
+      </div>
+      {actions}
     </div>
   )
 }

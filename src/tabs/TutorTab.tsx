@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react'
 import { useStudyMind } from '../context'
 import { s, tokens } from '../styles'
 import { MarkdownRenderer } from '../MarkdownRenderer'
-import { IconMessageCircle, IconSend, IconAlertCircle, IconFileText } from '../icons'
+import { IconMessageCircle, IconSend, IconAlertCircle, IconFileText, IconPencilPlus } from '../icons'
 import { ComplexitySelector } from '../components/ComplexitySelector'
 import { CopyButton } from '../components/CopyButton'
 
@@ -16,6 +16,26 @@ export function TutorTab() {
     sending, setSending, complexity, setComplexity,
   } = useStudyMind()
   const [input, setInput] = useState('')
+  const [startingNew, setStartingNew] = useState(false)
+
+  async function handleNewChat() {
+    if (messages.length === 0 || sending || startingNew) return
+    if (!window.confirm("Start a new conversation? You won't be able to return to this one.")) return
+    setStartingNew(true)
+    try {
+      await client.newChat(courseId, userId)
+    } catch {
+      // Still clear locally; the server will pick the session back up on the next message
+    } finally {
+      setMessages([])
+      setSessionId(undefined)
+      setStartingNew(false)
+    }
+  }
+
+  const conversationText = messages
+    .map(m => `${m.role === 'user' ? 'You' : 'AI Tutor'}: ${m.content}`)
+    .join('\n\n')
   const scrollRef = useRef<HTMLDivElement>(null)
 
   // Scroll only the message list — scrollIntoView would also scroll the host page
@@ -53,7 +73,31 @@ export function TutorTab() {
 
   return (
     <>
-      <ComplexitySelector value={complexity} onChange={setComplexity} />
+      <ComplexitySelector
+        value={complexity}
+        onChange={setComplexity}
+        actions={messages.length > 0 && (
+          <>
+            <button
+              onClick={handleNewChat}
+              disabled={sending || startingNew}
+              title="Start a new conversation"
+              style={{
+                display: 'flex', alignItems: 'center', gap: '4px',
+                padding: '6px 10px', fontSize: '11px', fontWeight: 600, fontFamily: tokens.font.sans,
+                border: `1px solid ${tokens.colors.border}`, borderRadius: tokens.radius.md,
+                background: tokens.colors.white, color: tokens.colors.textSecondary,
+                cursor: sending || startingNew ? 'default' : 'pointer', opacity: sending ? 0.6 : 1,
+                flexShrink: 0, whiteSpace: 'nowrap',
+              }}
+            >
+              <IconPencilPlus size={13} color={tokens.colors.textSecondary} />
+              {startingNew ? '…' : 'New'}
+            </button>
+            <CopyButton text={conversationText} size={14} title="Copy the whole conversation" />
+          </>
+        )}
+      />
 
       <div ref={scrollRef} style={s.scrollArea} aria-live="polite">
         {messages.length === 0 && (
@@ -105,21 +149,6 @@ export function TutorTab() {
           <div style={{ ...s.aiMsg, color: tokens.colors.textMuted }}>Thinking…</div>
         )}
       </div>
-      {messages.length > 0 && (
-        <div style={{
-          display: 'flex', justifyContent: 'flex-end',
-          padding: '4px 14px', borderTop: `1px solid ${tokens.colors.border}`,
-          background: tokens.colors.white, flexShrink: 0,
-        }}>
-          <CopyButton
-            text={messages.map(m => `${m.role === 'user' ? 'You' : 'AI Tutor'}: ${m.content}`).join('\n\n')}
-            size={13}
-            label="Copy conversation"
-            title="Copy the whole conversation"
-          />
-        </div>
-      )}
-
       <div style={s.inputRow}>
         <textarea
           style={s.input}
